@@ -1,6 +1,8 @@
 package main
 
 func main() {
-	//StartWeb()
-	StartTcp()
+	p := NewPlayer("c:\\tools")
+	StartTcp(p)
+
+	p.Close()
 }
