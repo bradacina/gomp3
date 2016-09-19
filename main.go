@@ -2,7 +2,9 @@ package main
 
 func main() {
 	p := NewPlayer("c:\\tools")
-	StartTcp(p)
+	//StartTcp(p)
 
-	p.Close()
+	//p.Close()
+
+	StartWeb(p)
 }
