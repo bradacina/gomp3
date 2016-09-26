@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl_mixer"
 )
@@ -50,7 +51,11 @@ type PlayerStatus struct {
 }
 
 func NewPlayer(folder string) *Player {
-	return &Player{folder: folder}
+	p := &Player{folder: folder}
+
+	mix.HookMusicFinished(hookMusicFinished(p))
+
+	return p
 }
 
 func (p *Player) Status() *PlayerStatus {
@@ -94,8 +99,8 @@ func clamp(vol int) int {
 }
 
 func (p *Player) TogglePause() {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
+	p.lock.Lock()
+	defer p.lock.Unlock()
 
 	if p.music == nil {
 		return
@@ -103,31 +108,29 @@ func (p *Player) TogglePause() {
 
 	if p.loaded {
 		if !mix.PausedMusic() {
-			log.Print("music is playing")
 			mix.PauseMusic()
 		} else {
-			log.Print("music is not playing")
 			mix.ResumeMusic()
 		}
 	} else {
-		p.Play()
+		p.internalPlay()
 	}
 }
 
 func (p *Player) Play() error {
-	p.lock.RLock()
-	defer p.lock.RUnlock()
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
+	return p.internalPlay()
+}
+
+func (p *Player) internalPlay() error {
 
 	if p.music == nil {
 		return ErrNoFileLoaded
 	}
 
-	loops := 1
-	if p.looping {
-		loops = -1
-	}
-
-	err := p.music.Play(loops)
+	err := p.music.Play(1)
 	if err == nil {
 		p.loaded = true
 	}
@@ -138,7 +141,9 @@ func (p *Player) Stop() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
+	mix.HookMusicFinished(func() {})
 	mix.HaltMusic()
+	mix.HookMusicFinished(hookMusicFinished(p))
 	if p.music != nil {
 		p.music.Free()
 		p.music = nil
@@ -148,7 +153,11 @@ func (p *Player) Stop() {
 }
 
 func (p *Player) Close() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	mix.CloseAudio()
+	mix.HookMusicFinished(nil)
 }
 
 func (p *Player) LoadSong(file string) error {
@@ -165,10 +174,16 @@ func (p *Player) LoadSong(file string) error {
 }
 
 func (p *Player) ToggleLooping() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	p.looping = !p.looping
 }
 
 func (p *Player) ListSongs() ([]string, error) {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+
 	file, err := os.Open(p.folder)
 	if err != nil {
 		return nil, err
@@ -184,4 +199,29 @@ func (p *Player) ListSongs() ([]string, error) {
 	}
 
 	return filesOnly, nil
+}
+
+func hookMusicFinished(p *Player) func() {
+	return func() {
+		p.lock.RLock()
+		looping := p.looping
+		p.lock.RUnlock()
+
+		// we launch a goroutine here since we don't want to call
+		// anything on mix/player from this callback
+		go p.onMusicFinished(looping)
+	}
+}
+
+func (p *Player) onMusicFinished(shouldLoop bool) {
+	<-time.After(50 * time.Millisecond)
+
+	if shouldLoop {
+		err := p.Play()
+		if err != nil {
+			log.Println("error onMusicFinished when trying to loop", err)
+		}
+	} else {
+		p.Stop()
+	}
 }

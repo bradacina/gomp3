@@ -1,15 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <title></title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!--<link href="css/style.css" rel="stylesheet">-->
-        <script src="js/lib.js"></script>
-        <script src="js/app.js"></script>
-    </head>
-    <body>
-    
-    Testing 123
-    </body>
+<html>
+<head>
+  <title>MP3 Player</title>
+  <script src="js/vue.js"></script>
+  <script src="js/vue-resource.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div>Folder: {{status.Folder}}</div>
+    <div>Looping: {{status.Looping}}</div>
+    <div>IsPaused: {{status.IsPaused}}</div>
+    <div>Filename: {{status.Filename}}</div>
+    <div>Volume: {{status.Volume}}</div>
+    <div>Loaded: {{status.Loaded}}</div>
+
+    <div>
+      <div>Songs:</div>
+      <ul>
+        <li v-for="item in songList">
+          <label>{{item}}</label>
+            <a href="#" v-if="item != status.Filename" v-on:click.stop.prevent="this.load(item)">Play</a>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <button v-on:click="playPause()">
+        {{status.Loaded && !status.IsPaused ? 'Pause' : 'Play'}}
+      </button>
+      <button v-on:click="stop()">
+        Stop
+      </button>
+      <button v-on:click="volDown()">Volume Down</button>
+      <button v-on:click="volUp()">Volume Up</button>
+      <button v-on:click="loop()">Toggle Loop</button>
+    </div>
+  </div>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        status: {
+          Folder: '',
+          Looping: false,
+          IsPaused: false,
+          Filename: '',
+          Volume: 0,
+          Loaded: false
+        },
+        songList: []
+      },
+      methods: {
+        getStatusSuccess: function(response) {
+          this.status = JSON.parse(response.body);
+        },
+        getStatusError: function(response) {
+        },
+        getStatus: function() {
+          this.$http.get("/status").then(this.getStatusSuccess, this.getStatusError);
+        },
+
+        getList: function() {
+          this.$http.get("/list").then(this.getListSuccess, this.getListError);
+        },
+        getListSuccess: function(response) {
+          this.songList = JSON.parse(response.body);
+        },
+        getListError: function(response) {
+        }, 
+        playPause: function() {
+          this.$http.post("/togglepause",{}).then(this.playPauseSuccess, this.playPauseError);
+        },
+        playPauseSuccess: function(response) {},
+        playPauseError: function(response) {},
+
+        load: function(songName) {
+          this.$http.post("/load", {song: songName}).then(this.loadSuccess, this.loadError);
+        },
+        loadSuccess: function(response) {
+          this.$http.post("/togglepause",{}).then(this.playPauseSuccess, this.playPauseError);
+        },
+        loadError: function(response) {},
+
+        stop: function() {
+          this.$http.post("/stop", {});
+        },
+
+        volUp: function() {
+          this.$http.post("/volumeup", {});
+        },
+        volDown: function() {
+          this.$http.post("/volumedown", {});
+        },
+
+        loop: function() {
+          this.$http.post("/togglelooping", {});
+        }
+      },
+      // Vue is ready
+      ready: function() {
+        this.getList();
+        this.getStatus();
+        setInterval(this.getStatus, 1000);
+      }
+    })
+  </script>
+</body>
 </html>

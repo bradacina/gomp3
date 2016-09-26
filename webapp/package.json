@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ender": "ender",
-    "ender-install": "ender add domready reqwest --output js/lib.js"
+    "vue": "vue",
+    "serve": "live-server"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "ender": "^2.1.1"
+    "live-server": "^1.1.0",
+    "vue-cli": "^2.3.1"
   }
 }
