@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/bradacina/mp3player/internal/httpChain"
+	"github.com/bradacina/gomp3/internal/httpChain"
 )
 
 type errorMessage struct {
