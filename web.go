@@ -20,7 +20,6 @@ type loadSongMessage struct {
 var p *Player
 
 func init() {
-	http.Handle("/", http.FileServer(http.Dir("./webapp")))
 	http.Handle("/volumeup",
 		httpChain.NewChainWithFunc(checkPlayer).
 			NextFunc(checkPost).
@@ -55,10 +54,11 @@ func init() {
 			NextFunc(status))
 }
 
-func StartWeb(player *Player) {
+func StartWeb(player *Player, webappPath string, port string) {
+	http.Handle("/", http.FileServer(http.Dir(webappPath)))
 	p = player
-	log.Println("Listening on port :8080")
-	err := http.ListenAndServe(":8080", nil)
+	log.Printf("Listening on port %v\n", port)
+	err := http.ListenAndServe(port, nil)
 	if err != nil {
 		log.Fatal("Cannot startup server on :8080", err)
 	}

@@ -1,10 +1,9 @@
 package main
 
 func main() {
-	p := NewPlayer("c:\\tools")
-	//StartTcp(p)
+	c := getConfig()
 
-	//p.Close()
+	p := NewPlayer(c.Mp3Location)
 
-	StartWeb(p)
+	StartWeb(p, c.WebappPath, c.Port)
 }

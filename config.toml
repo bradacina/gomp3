@@ -1,0 +1,3 @@
+WebappPath = "./webapp"
+Port = ":8080"
+Mp3Location = "c:\\tools"
