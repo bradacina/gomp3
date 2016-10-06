@@ -1,0 +1,9 @@
+[Unit]
+Description=Mp3 player with remote http control
+
+[Service]
+WorkingDirectory=/usr/local/gomp3
+ExecStart=/usr/local/gomp3/gomp3
+
+[Install]
+WantedBy=multi-user.target
