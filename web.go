@@ -60,7 +60,7 @@ func StartWeb(player *Player, webappPath string, port string) {
 	log.Printf("Listening on port %v\n", port)
 	err := http.ListenAndServe(port, nil)
 	if err != nil {
-		log.Fatal("Cannot startup server on :8080", err)
+		log.Fatal("Cannot startup server on", port, err)
 	}
 }
 
